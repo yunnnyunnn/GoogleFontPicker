@@ -21,6 +21,7 @@ class FontPickerController: UIViewController {
     
     // MARK: - Data
     var fonts: [Font] = FontManager.shared.fontList
+    var pickedFontName: FontName? = nil
 
     // MARK: - Controller Life Cycle
     override func viewDidLoad() {
@@ -44,6 +45,8 @@ class FontPickerController: UIViewController {
         // Set up collection view.
         self.fontCollectionView.dataSource = self
         self.fontCollectionView.delegate = self
+        // Uncomment this line to enable data prefetching.
+        //self.fontCollectionView.prefetchDataSource = self
         
         // Listen to notifications
         NotificationCenter.default.addObserver(self, selector: #selector(self.fontListUpdated(_:)), name: NSNotification.Name(rawValue: FontManager.NOTIFICATION_UPDATED), object: nil)
@@ -90,7 +93,7 @@ class FontPickerController: UIViewController {
 
 }
 
-extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.fonts.count
@@ -103,10 +106,93 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         }
         
         let font = self.fonts[indexPath.row]
-        cell.configure(with: font)
+        
+        cell.configure(with: font, selectedFontName: self.pickedFontName)
+        
+        if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
+            FontManager.shared.downloadFile(forFont: font) { (localFileName) in
+                
+                if font.name == cell.representedFont,
+                    let localFileName = localFileName,
+                    let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+                    let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                    // Now we have the font. Change it and animate.
+                    DispatchQueue.main.async {
+                        
+                        cell.label.font = font
+                        cell.label.isHidden = false
+                        cell.label.alpha = 0.0
+                        UIView.animate(withDuration: 0.25, animations: {
+                            cell.label.alpha = 1.0
+                        })
+                        
+                    }
+                }
+                
+            }
+        }
         
         return cell
         
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        let font = self.fonts[indexPath.row]
+        self.pickedFontName = font.name
+        collectionView.reloadData()
+        
+        if let localFileName = font.regular?.localFileName,
+            let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+            let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 26.0) {
+            self.previewTextField.font = font
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+        
+        // Begin asynchronously fetching font files for the requested index paths.
+        for indexPath in indexPaths {
+            let font = self.fonts[indexPath.row]
+            
+            if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
+                FontManager.shared.downloadFile(forFont: font) { (localFileName) in
+                    
+                    if let localFileName = localFileName,
+                        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+                        let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                        // Now we have the font. Change it and animate.
+                        DispatchQueue.main.async {
+                            
+                            if let cell = collectionView.cellForItem(at: IndexPath(row: indexPath.row, section: 0)) as? FontPreviewCell,
+                                font.name == cell.representedFont {
+                                
+                                cell.label.font = customFont
+                                cell.label.isHidden = false
+                                cell.label.alpha = 0.0
+                                UIView.animate(withDuration: 0.25, animations: {
+                                    cell.label.alpha = 1.0
+                                })
+                            }
+                            
+                            
+                        }
+                    }
+                    
+                    
+                }
+            }
+            
+        }
+        
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
+        // Cancel any in-flight requests for data for the specified index paths.
+        for indexPath in indexPaths {
+            let font = self.fonts[indexPath.row]
+            FontManager.shared.cancelDownload(forFont: font)
+        }
     }
     
     

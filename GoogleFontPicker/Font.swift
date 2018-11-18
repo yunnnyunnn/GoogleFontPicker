@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 typealias FontName = String
 typealias FontVariantName = String
@@ -21,6 +22,11 @@ class Font: NSObject, NSCoding {
     let name: FontName
     let version: String
     var variants: [FontVariantName: FontVariant]
+    var regular: FontVariant? {
+        get {
+            return self.variants["regular"]
+        }
+    }
     override var description: String {
         return "Name: \(self.name)\nVersion: \(self.version)\nVariants: \(self.variants)"
     }
@@ -63,14 +69,15 @@ class FontVariant: NSObject, NSCoding {
     // MARK: - Constants and properties
     static let KEY_NAME = "com.yunnnyunnn.GoogleFontPicker.FontVariant.name"
     static let KEY_REMOTE_URL = "com.yunnnyunnn.GoogleFontPicker.FontVariant.remoteURL"
-    static let KEY_LOCAL_URL = "com.yunnnyunnn.GoogleFontPicker.FontVariant.localURL"
+    static let KEY_LOCAL_FILE_NAME = "com.yunnnyunnn.GoogleFontPicker.FontVariant.localFileName"
     
     let name: FontVariantName
     let remoteURL: URL
     var downloadTask: URLSessionDataTask? = nil
-    var localURL: URL? = nil
+    var localFileName: String? = nil
+
     override var description: String {
-        return "Name: \(self.name)\nRemoteURL: \(self.remoteURL)\nLocalURL: \(String(describing: self.localURL))"
+        return "Name: \(self.name)\nRemoteURL: \(self.remoteURL)\nLocalFileName: \(String(describing: self.localFileName))"
     }
     
     // MARK: - Initializer
@@ -84,7 +91,7 @@ class FontVariant: NSObject, NSCoding {
         
         aCoder.encode(self.name, forKey: FontVariant.KEY_NAME)
         aCoder.encode(self.remoteURL, forKey: FontVariant.KEY_REMOTE_URL)
-        aCoder.encode(self.localURL, forKey: FontVariant.KEY_LOCAL_URL)
+        aCoder.encode(self.localFileName, forKey: FontVariant.KEY_LOCAL_FILE_NAME)
         
     }
     
@@ -98,8 +105,42 @@ class FontVariant: NSObject, NSCoding {
         
         self.name = name
         self.remoteURL = remoteURL
-        self.localURL = aDecoder.decodeObject(forKey: FontVariant.KEY_LOCAL_URL) as? URL
+        self.localFileName = aDecoder.decodeObject(forKey: FontVariant.KEY_LOCAL_FILE_NAME) as? String
         
     }
     
+}
+
+extension UIFont {
+    class func font(withFileAt url: URL, size: CGFloat) -> UIFont? {
+        guard let data = NSData(contentsOf: url) else {
+            print("Failed to get data from URL:\n\(url)")
+            return nil
+        }
+        
+        guard let cfData = CFDataCreate(kCFAllocatorDefault, data.bytes.assumingMemoryBound(to: UInt8.self), data.length) else {
+            print("Failed to convert data to cfData.")
+            return nil
+        }
+        
+        guard let dataProvider = CGDataProvider(data: cfData) else {
+            print("Failed to create CGDataProvider.")
+            return nil
+        }
+        
+        guard let cgFont = CGFont(dataProvider) else {
+            print("Failed to create CGFont.")
+            return nil
+        }
+        
+        var error: Unmanaged<CFError>?
+        CTFontManagerRegisterGraphicsFont(cgFont, &error)
+        if let fontName = cgFont.postScriptName,
+            let customFont = UIFont(name: String(fontName), size: size) {
+            return customFont
+        } else {
+            print("Error loading Font.")
+            return nil
+        }
+    }
 }

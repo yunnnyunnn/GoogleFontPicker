@@ -18,7 +18,6 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         self.startButton.setTitle(NSLocalizedString("main_fontpicker", comment: ""), for: .normal)
-        
     }
 
     // MARK: - IBActions

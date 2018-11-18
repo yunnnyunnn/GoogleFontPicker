@@ -22,9 +22,12 @@ class FontManager {
     fileprivate var updateRequest: URLSessionTask? = nil
     var fontList: [Font] {
         get {
+            // In this version we only consider regular font.
             return self.fonts.values.sorted { (f1, f2) -> Bool in
                 return f1.name < f2.name
-            }
+                }.filter({ (f) -> Bool in
+                    return f.regular != nil
+                })
         }
     }
     
@@ -79,10 +82,77 @@ class FontManager {
                 }
                 
             } else {
-                print("Failed to update font info with error:\n\(String(describing: error))")
+                print("Failed to update font list with error:\n\(String(describing: error))")
             }
         }
         self.updateRequest?.resume()
+    }
+    
+    func downloadFile(forFont font: Font, completion: ((String?) -> Void)? = nil) {
+        
+        // Currently we use regular variant to present the font.
+        guard let regularVariant = font.regular else {
+            print("Cannot find regular variant for font.")
+            completion?(nil)
+            return
+        }
+        
+        // Prevent duplicated tasks.
+        if regularVariant.downloadTask != nil {
+            print("There is an ongoing download task for font \(font.name). Will not create another one.")
+            completion?(nil)
+            return
+        }
+        
+        regularVariant.downloadTask = URLSession.shared.dataTask(with: regularVariant.remoteURL, completionHandler: { [unowned regularVariant] (data, response, error) in
+            
+            // Clear request.
+            regularVariant.downloadTask = nil
+
+            if let data = data {
+                
+                // Write to disk.
+                if var fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    fileURL.appendPathComponent(regularVariant.remoteURL.lastPathComponent)
+
+                    do {
+                        try data.write(to: fileURL)
+                        // Successfully wrote font to local URL.
+                        regularVariant.localFileName = regularVariant.remoteURL.lastPathComponent
+                        FontManager.shared.saveToUserDefaults()
+                        completion?(regularVariant.remoteURL.lastPathComponent)
+                    } catch {
+                        print("Failed to write \(regularVariant.remoteURL.lastPathComponent) to URL.")
+                        completion?(nil)
+                    }
+
+                } else {
+                    print("Failed to construct file URL.")
+                    completion?(nil)
+                }
+                
+            } else {
+                print("Failed to download font with error:\n\(String(describing: error))")
+                completion?(nil)
+            }
+            
+        })
+        
+        regularVariant.downloadTask?.resume()
+        
+    }
+    
+    func cancelDownload(forFont font: Font) {
+        
+        // Currently we use regular variant to present the font.
+        guard let regularVariant = font.regular else {
+            print("Cannot find regular variant for font.")
+            return
+        }
+        
+        // Cancel the task.
+        regularVariant.downloadTask?.cancel()
+        regularVariant.downloadTask = nil
     }
     
     fileprivate func updateFonts(withData data: [AnyHashable: Any]) -> Bool {
@@ -111,7 +181,7 @@ class FontManager {
                 for variantName in variantList {
                     if let fileString = files[variantName],
                         let remoteURL = URL(string: fileString) {
-                        variants[fileString] = FontVariant(name: variantName, remoteURL: remoteURL)
+                        variants[variantName] = FontVariant(name: variantName, remoteURL: remoteURL)
                     } else {
                         // Cannot find url from variant list.
                     }
