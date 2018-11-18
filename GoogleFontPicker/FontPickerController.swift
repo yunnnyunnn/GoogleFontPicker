@@ -262,13 +262,4 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         
     }
     
-    func collectionView(_ collectionView: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
-        // Cancel any in-flight requests for data for the specified index paths.
-        for indexPath in indexPaths {
-            let font = self.fonts[indexPath.row]
-            FontManager.shared.cancelDownload(forFont: font)
-        }
-    }
-    
-    
 }
