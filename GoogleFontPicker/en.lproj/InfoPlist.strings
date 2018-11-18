@@ -1,0 +1,10 @@
+/* 
+  InfoPlist.strings
+  GoogleFontPicker
+
+  Created by Ting-Yang Chen on 11/17/18.
+  Copyright © 2018 Ting Yang Chen. All rights reserved.
+*/
+
+/* Localized Bundle Display Name */
+"CFBundleDisplayName" = "Font Picker";
