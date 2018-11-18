@@ -42,9 +42,6 @@ class FontPreviewCell: UICollectionViewCell {
             // We have the font. Change it.
             self.label.isHidden = false
             self.label.font = font
-        } else if font.regular?.downloadTask != nil {
-            // Not font yet but it's being downloaded.
-            self.label.isHidden = true
         } else {
             self.label.isHidden = true
         }

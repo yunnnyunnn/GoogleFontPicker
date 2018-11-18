@@ -8,3 +8,5 @@
 
 "main_fontpicker" = "Font Picker";
 "picker_title" = "Preview";
+"picker_edit" = "Tap to Edit";
+"picker_placeholder" = "Tap to Edit";

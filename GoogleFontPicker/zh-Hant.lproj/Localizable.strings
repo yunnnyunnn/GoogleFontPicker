@@ -8,3 +8,5 @@
 
 "main_fontpicker" = "挑選字型";
 "picker_title" = "預覽";
+"picker_edit" = "Tap to Edit";
+"picker_placeholder" = "Tap to Edit";

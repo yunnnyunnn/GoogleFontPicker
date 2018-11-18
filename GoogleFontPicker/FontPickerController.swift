@@ -42,30 +42,77 @@ class FontPickerController: UIViewController {
         self.title = NSLocalizedString("picker_title", comment: "")
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(self.doneButtonPressed(_:)))
         
+        // Textfield setup.
+        self.previewTextField.delegate = self
+        self.previewTextField.text = NSLocalizedString("picker_edit", comment: "")
+        self.previewTextField.placeholder = NSLocalizedString("picker_placeholder", comment: "")
+
+        
+        // Add tap gesture recognizer.
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.topViewTapped(_:)))
+        self.topView.addGestureRecognizer(tapGestureRecognizer)
+        
         // Set up collection view.
         self.fontCollectionView.dataSource = self
         self.fontCollectionView.delegate = self
-        // Uncomment this line to enable data prefetching.
-        //self.fontCollectionView.prefetchDataSource = self
+        self.fontCollectionView.prefetchDataSource = self
         
         // Listen to notifications
         NotificationCenter.default.addObserver(self, selector: #selector(self.fontListUpdated(_:)), name: NSNotification.Name(rawValue: FontManager.NOTIFICATION_UPDATED), object: nil)
-        
+        // Register keyboard notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+
         // Update Fonts.
         DispatchQueue.global(qos: .background).async {
             FontManager.shared.updateFonts()
         }
+        
+    }
+    
+    // MARK: - Helpers
+    func presentFontIfVisible(_ font: Font) {
+        
+        for visibleCell in self.fontCollectionView.visibleCells {
+            if let previewCell = visibleCell as? FontPreviewCell,
+                previewCell.representedFont == font.name,
+                let localFileName = font.regular?.localFileName,
+                let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+                let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                
+                let wasHidden = previewCell.label.isHidden
+                previewCell.label.font = customFont
+                previewCell.label.isHidden = false
+                if wasHidden {
+                    previewCell.label.alpha = 0.0
+                    UIView.animate(withDuration: 0.25, animations: {
+                        previewCell.label.alpha = 1.0
+                    })
+                }
+                
+                break
+            }
+        }
+        
     }
     
     // MARK: - IBActions
 
     @IBAction func doneButtonPressed(_ sender: Any) {
-        self.dismiss(animated: true) {
+        if self.previewTextField.isFirstResponder {
+            self.previewTextField.resignFirstResponder()
+        } else {
+            self.dismiss(animated: true) {
+            }
         }
     }
     
+    @objc func topViewTapped(_ sender: Any) {
+        self.previewTextField.resignFirstResponder()
+    }
+    
     // MARK: - Notification Handlers
-    @objc func fontListUpdated(_ notification: NSNotification) {
+    @objc func fontListUpdated(_ notification: Foundation.Notification) {
         print("Font updated.")
         
         let fontWasEmpty = self.fonts.count == 0
@@ -90,7 +137,58 @@ class FontPickerController: UIViewController {
         }
         
     }
+    
+    @objc func keyboardWillChangeFrame(_ notification: Foundation.Notification) {
+        
+        // Adjust input field position.
+        if let info = (notification as NSNotification).userInfo {
+            
+            let keyboardEndFrame: CGRect = (info[UIResponder.keyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
+            
+            self.topViewBottomSpaceConstraint.constant = keyboardEndFrame.size.height - self.bottomView.frame.height
+            
+            var animationDuration: TimeInterval = 0.25
+            
+            if let keyboardAnimationDuration = info[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber {
+                animationDuration = TimeInterval(truncating: keyboardAnimationDuration)
+            }
+            
+            UIView.animate(withDuration: animationDuration, delay: 0.0, options: .curveEaseInOut, animations: { () -> Void in
+                self.view.layoutIfNeeded()
+            }, completion: { (completion) -> Void in
+            })
+            
+        }
+        
+    }
+    
+    @objc func keyboardWillHide(_ notification: Foundation.Notification) {
+        
+        // Adjust input field position.
+        if let info = (notification as NSNotification).userInfo {
+            
+            self.topViewBottomSpaceConstraint.constant = 0
+            
+            var animationDuration: TimeInterval = 0.25
+            
+            if let keyboardAnimationDuration = info[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber {
+                animationDuration = TimeInterval(truncating: keyboardAnimationDuration)
+            }
+            
+            UIView.animate(withDuration: animationDuration, delay: 0.0, options: .curveEaseInOut, animations: { () -> Void in
+                self.view.layoutIfNeeded()
+            }, completion: { (completion) -> Void in
+            })
+        }
+    }
 
+}
+
+extension FontPickerController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.previewTextField.resignFirstResponder()
+        return true
+    }
 }
 
 extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
@@ -110,22 +208,12 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         cell.configure(with: font, selectedFontName: self.pickedFontName)
         
         if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
-            FontManager.shared.downloadFile(forFont: font) { (localFileName) in
+            FontManager.shared.downloadFile(forFont: font) { [unowned self] (localFileName) in
                 
-                if font.name == cell.representedFont,
-                    let localFileName = localFileName,
-                    let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-                    let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
-                    // Now we have the font. Change it and animate.
+                if localFileName != nil {
+                    // Try to present the font if visible.
                     DispatchQueue.main.async {
-                        
-                        cell.label.font = font
-                        cell.label.isHidden = false
-                        cell.label.alpha = 0.0
-                        UIView.animate(withDuration: 0.25, animations: {
-                            cell.label.alpha = 1.0
-                        })
-                        
+                        self.presentFontIfVisible(font)
                     }
                 }
                 
@@ -139,14 +227,16 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
         let font = self.fonts[indexPath.row]
-        self.pickedFontName = font.name
-        collectionView.reloadData()
         
         if let localFileName = font.regular?.localFileName,
             let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-            let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 26.0) {
-            self.previewTextField.font = font
+            let customfont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 26.0) {
+            self.previewTextField.font = customfont
+            self.pickedFontName = font.name
+            collectionView.reloadData()
         }
+        
+        collectionView.deselectItem(at: indexPath, animated: false)
     }
     
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
@@ -156,29 +246,14 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
             let font = self.fonts[indexPath.row]
             
             if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
-                FontManager.shared.downloadFile(forFont: font) { (localFileName) in
+                FontManager.shared.downloadFile(forFont: font) { [unowned self] (localFileName) in
                     
-                    if let localFileName = localFileName,
-                        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-                        let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
-                        // Now we have the font. Change it and animate.
+                    if localFileName != nil {
+                        // Try to present the font if visible.
                         DispatchQueue.main.async {
-                            
-                            if let cell = collectionView.cellForItem(at: IndexPath(row: indexPath.row, section: 0)) as? FontPreviewCell,
-                                font.name == cell.representedFont {
-                                
-                                cell.label.font = customFont
-                                cell.label.isHidden = false
-                                cell.label.alpha = 0.0
-                                UIView.animate(withDuration: 0.25, animations: {
-                                    cell.label.alpha = 1.0
-                                })
-                            }
-                            
-                            
+                            self.presentFontIfVisible(font)
                         }
                     }
-                    
                     
                 }
             }
