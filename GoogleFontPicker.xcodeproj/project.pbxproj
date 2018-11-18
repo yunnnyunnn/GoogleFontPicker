@@ -30,6 +30,7 @@
 		220F975C219FF91000124762 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		220F975F219FF91000124762 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		220F9761219FF91000124762 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		228C530321A1716B009EC487 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		22AE28B221A117BB006BB959 /* Font.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Font.swift; sourceTree = "<group>"; };
 		22AE28B421A11859006BB959 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
 		22B7A99C21A056CA002894A9 /* Key.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Key.plist; sourceTree = "<group>"; };
@@ -56,6 +57,7 @@
 		220F9749219FF90F00124762 = {
 			isa = PBXGroup;
 			children = (
+				228C530321A1716B009EC487 /* README.md */,
 				220F9754219FF90F00124762 /* GoogleFontPicker */,
 				220F9753219FF90F00124762 /* Products */,
 			);
