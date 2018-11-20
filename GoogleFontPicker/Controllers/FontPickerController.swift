@@ -70,7 +70,7 @@ class FontPickerController: UIViewController {
                 FontManager.shared.downloadFontList(withAPIKey: key)
             }
         } else {
-            print("WARNING: No Google Font API Key provided to download the font list.")
+            print("WARNING: No Google Font API key to download the font list. Please see Installation section in README.md file.")
         }
         
         
