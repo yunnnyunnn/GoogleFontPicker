@@ -14,7 +14,7 @@ Demostrating Google Font preview.
 ## Installation
 
 Before building, create a file `Keys.plist` in your main bundle and add a key `GOOGLE_FONT` with the API key you retrieve from Google Developer.
-<img src="https://raw.githubusercontent.com/yunnnyunnn/GoogleFontPicker/master/key.png" alt=“key” width=“675” height=“354” />
+<img src="https://raw.githubusercontent.com/yunnnyunnn/GoogleFontPicker/master/key.png" alt=“key” width=“450” height=“236” />
 
 ## Discussion
 
