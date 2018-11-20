@@ -10,32 +10,45 @@ import UIKit
 
 class FontPreviewCell: UICollectionViewCell {
     
+    // MARK: - Identifier
     static let reuseIdentifier = "FontPreviewCell"
     
     // MARK: - UI Elements
     @IBOutlet weak var label: UILabel!
     
+    // MARK: - Binding
     var representedFont: FontName?
     
+    // MARK: - UI Configurations
     override func awakeFromNib() {
         super.awakeFromNib()
         self.clipsToBounds = true
         self.layer.cornerRadius = 5.0
-        self.layer.borderColor = UIColor.darkGray.cgColor
+        self.layer.borderColor = UIColor(white: 140.0/255.0, alpha: 1.0).cgColor
         self.layer.borderWidth = 0.0
     }
+    
+    /**
+     Present a font and bind the cell with the font name. Show border if the font is selected.
+     
+     - Parameter font: The font to present.
+     - Parameter selectedFontName: The font name currently selected in the controller.
 
+     */
     func configure(with font: Font, selectedFontName: FontName?) {
         
+        // Bind cell with font name.
         self.representedFont = font.name
-        self.label.text = font.name
         
+        // Show selection border if needed.
         if selectedFontName == font.name {
-            self.layer.borderWidth = 1.0
+            self.layer.borderWidth = 2.0
         } else {
             self.layer.borderWidth = 0.0
         }
         
+        // Change text and the font.
+        self.label.text = font.name
         if let localFileName = font.regular?.localFileName,
             let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
             let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {

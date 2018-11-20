@@ -25,5 +25,15 @@ class ViewController: UIViewController {
         // Already connected via storyboard.
     }
     
+    // MARK: - Segue
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let fontPickerController = (segue.destination as? UINavigationController)?.viewControllers.first as? FontPickerController {
+            
+            // Fill the api key.
+            fontPickerController.APIKey = KeyManager.shared.googleFont
+            
+        }
+    }
+    
 }
 

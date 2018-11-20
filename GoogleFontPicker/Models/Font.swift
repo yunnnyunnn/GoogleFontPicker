@@ -112,6 +112,16 @@ class FontVariant: NSObject, NSCoding {
 }
 
 extension UIFont {
+    
+    /**
+     A convenient function to create a custom font with font file URL and size.
+     
+     - Parameter url: The local file URL for the font.
+     - Parameter size: The font size.
+     
+     - Returns: A custom font from the file. `nil` if failure.
+
+     */
     class func font(withFileAt url: URL, size: CGFloat) -> UIFont? {
         guard let data = NSData(contentsOf: url) else {
             print("Failed to get data from URL:\n\(url)")

@@ -20,14 +20,14 @@ class KeyManager {
         }
     }
     
-    init() {
-        if let url  = Bundle.main.url(forResource: "Key", withExtension: "plist"),
+    fileprivate init() {
+        if let url  = Bundle.main.url(forResource: "Keys", withExtension: "plist"),
             let data = try? Data(contentsOf: url),
             let plistDictionary = (try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)) as? [String: String] {
             self.propertyList = plistDictionary
         } else {
-            print("Cannot find Key property list.")
             self.propertyList = nil
+            fatalError("Add a plist file named Keys.plist with your confidential keys to the main bundle.")
         }
     }
     

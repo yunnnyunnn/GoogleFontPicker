@@ -22,6 +22,7 @@ class FontPickerController: UIViewController {
     // MARK: - Data
     var fonts: [Font] = FontManager.shared.fontList
     var pickedFontName: FontName? = nil
+    var APIKey: String? = nil
 
     // MARK: - Controller Life Cycle
     override func viewDidLoad() {
@@ -64,16 +65,32 @@ class FontPickerController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
 
         // Update Fonts.
-        DispatchQueue.global(qos: .background).async {
-            FontManager.shared.updateFonts()
+        if let key = self.APIKey {
+            DispatchQueue.global(qos: .background).async {
+                FontManager.shared.downloadFontList(withAPIKey: key)
+            }
+        } else {
+            print("WARNING: No Google Font API Key provided to download the font list.")
         }
+        
         
     }
     
     // MARK: - Helpers
+    /**
+     Call this function when font is downloaded from remote. It will try to find if any visible cell should present the font preview.
+     
+     Before calling this function, check if the cell invoking the download is still there. Change the cell directly if possible, to avoid time consuming searching in this function.
+     **Make sure you call this function in main thread.**
+     
+     - Parameter font: Font to be present.
+     
+     */
     func presentFontIfVisible(_ font: Font) {
         
         for visibleCell in self.fontCollectionView.visibleCells {
+            
+            // Find if the visible cell should present the font.
             if let previewCell = visibleCell as? FontPreviewCell,
                 previewCell.representedFont == font.name,
                 let localFileName = font.regular?.localFileName,
@@ -98,6 +115,14 @@ class FontPickerController: UIViewController {
     
     // MARK: - IBActions
 
+    /**
+     Called when the done button is tapped.
+     
+     If editing the preview text, dismiss the keyboard. Otherwise, dismiss the page.
+     
+     - Parameter sender: The invoker.
+     
+     */
     @IBAction func doneButtonPressed(_ sender: Any) {
         if self.previewTextField.isFirstResponder {
             self.previewTextField.resignFirstResponder()
@@ -107,18 +132,32 @@ class FontPickerController: UIViewController {
         }
     }
     
-    @objc func topViewTapped(_ sender: Any) {
+    /**
+     Called when the top view is tapped.
+     
+     - Parameter sender: The invoker.
+     
+     */
+    @IBAction func topViewTapped(_ sender: Any) {
         self.previewTextField.resignFirstResponder()
     }
     
     // MARK: - Notification Handlers
+    /**
+     Called when the font list has been updated from remote.
+     
+     - Parameter notification: The notification received.
+     
+     */
     @objc func fontListUpdated(_ notification: Foundation.Notification) {
         print("Font updated.")
-        
+                
         let fontWasEmpty = self.fonts.count == 0
         
+        // Update local data.
         self.fonts = FontManager.shared.fontList
         
+        // Present the collection view with data and hide spinner.
         if self.fonts.count == 0 {
             self.activityIndicator.isHidden = false
             self.activityIndicator.startAnimating()
@@ -129,6 +168,7 @@ class FontPickerController: UIViewController {
         
         self.fontCollectionView.reloadData()
         
+        // Animate if needed.
         if fontWasEmpty {
             self.fontCollectionView.alpha = 0.0
             UIView.animate(withDuration: 0.25, animations: {
@@ -138,6 +178,14 @@ class FontPickerController: UIViewController {
         
     }
     
+    /**
+     Called when keyboard shows.
+     
+     The preview text field will be moved to center of the visible area, to provide a better user experience.
+     
+     - Parameter notification: The notification received.
+     
+     */
     @objc func keyboardWillChangeFrame(_ notification: Foundation.Notification) {
         
         // Adjust input field position.
@@ -162,6 +210,14 @@ class FontPickerController: UIViewController {
         
     }
     
+    /**
+     Called when keyboard dissmisses.
+     
+     The preview text field will be moved to center of the visible area, to provide a better user experience.
+     
+     - Parameter notification: The notification received.
+     
+     */
     @objc func keyboardWillHide(_ notification: Foundation.Notification) {
         
         // Adjust input field position.
@@ -184,6 +240,7 @@ class FontPickerController: UIViewController {
 
 }
 
+// MARK: - UITextFieldDelegate
 extension FontPickerController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.previewTextField.resignFirstResponder()
@@ -191,6 +248,7 @@ extension FontPickerController: UITextFieldDelegate {
     }
 }
 
+// MARK: - UICollectionViewDelegate, UICollectionViewDataSource
 extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -248,6 +306,7 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
+        // Change the preview with the font and show selection border.
         let font = self.fonts[indexPath.row]
         
         if let localFileName = font.regular?.localFileName,
@@ -258,6 +317,7 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
             collectionView.reloadData()
         }
         
+        // Clear selection.
         collectionView.deselectItem(at: indexPath, animated: false)
     }
     

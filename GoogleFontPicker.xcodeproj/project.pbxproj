@@ -14,7 +14,7 @@
 		220F9760219FF91000124762 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 220F975E219FF91000124762 /* LaunchScreen.storyboard */; };
 		22AE28B321A117BB006BB959 /* Font.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22AE28B221A117BB006BB959 /* Font.swift */; };
 		22AE28B521A11859006BB959 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22AE28B421A11859006BB959 /* FontManager.swift */; };
-		22B7A99D21A056CA002894A9 /* Key.plist in Resources */ = {isa = PBXBuildFile; fileRef = 22B7A99C21A056CA002894A9 /* Key.plist */; };
+		22B7A99D21A056CA002894A9 /* Keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 22B7A99C21A056CA002894A9 /* Keys.plist */; };
 		22B7A99F21A0571A002894A9 /* KeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B7A99E21A0571A002894A9 /* KeyManager.swift */; };
 		22CD4C1D21A1672D00CA83AD /* FontPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CD4C1C21A1672D00CA83AD /* FontPreviewCell.swift */; };
 		22D98BB421A018550020B870 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 22D98BB621A018550020B870 /* Localizable.strings */; };
@@ -33,7 +33,7 @@
 		228C530321A1716B009EC487 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		22AE28B221A117BB006BB959 /* Font.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Font.swift; sourceTree = "<group>"; };
 		22AE28B421A11859006BB959 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
-		22B7A99C21A056CA002894A9 /* Key.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Key.plist; sourceTree = "<group>"; };
+		22B7A99C21A056CA002894A9 /* Keys.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Keys.plist; sourceTree = "<group>"; };
 		22B7A99E21A0571A002894A9 /* KeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyManager.swift; sourceTree = "<group>"; };
 		22CD4C1C21A1672D00CA83AD /* FontPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontPreviewCell.swift; sourceTree = "<group>"; };
 		22D98BB521A018550020B870 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -75,21 +75,53 @@
 			isa = PBXGroup;
 			children = (
 				220F9755219FF90F00124762 /* AppDelegate.swift */,
-				220F9757219FF90F00124762 /* ViewController.swift */,
-				22D98BB821A01CD70020B870 /* FontPickerController.swift */,
-				22AE28B421A11859006BB959 /* FontManager.swift */,
-				22AE28B221A117BB006BB959 /* Font.swift */,
-				22B7A99E21A0571A002894A9 /* KeyManager.swift */,
-				22CD4C1C21A1672D00CA83AD /* FontPreviewCell.swift */,
+				22C9E24921A3FBB30066DEB2 /* Controllers */,
+				22C9E24B21A3FBDA0066DEB2 /* Models */,
+				22C9E24A21A3FBC50066DEB2 /* Views */,
+				22C9E24C21A3FC010066DEB2 /* Managers */,
 				220F9759219FF90F00124762 /* Main.storyboard */,
 				220F975C219FF91000124762 /* Assets.xcassets */,
 				220F975E219FF91000124762 /* LaunchScreen.storyboard */,
 				220F9761219FF91000124762 /* Info.plist */,
-				22B7A99C21A056CA002894A9 /* Key.plist */,
+				22B7A99C21A056CA002894A9 /* Keys.plist */,
 				22D98BBE21A01D870020B870 /* InfoPlist.strings */,
 				22D98BB621A018550020B870 /* Localizable.strings */,
 			);
 			path = GoogleFontPicker;
+			sourceTree = "<group>";
+		};
+		22C9E24921A3FBB30066DEB2 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				220F9757219FF90F00124762 /* ViewController.swift */,
+				22D98BB821A01CD70020B870 /* FontPickerController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		22C9E24A21A3FBC50066DEB2 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				22CD4C1C21A1672D00CA83AD /* FontPreviewCell.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		22C9E24B21A3FBDA0066DEB2 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				22AE28B221A117BB006BB959 /* Font.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		22C9E24C21A3FC010066DEB2 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				22AE28B421A11859006BB959 /* FontManager.swift */,
+				22B7A99E21A0571A002894A9 /* KeyManager.swift */,
+			);
+			path = Managers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -153,7 +185,7 @@
 			files = (
 				220F9760219FF91000124762 /* LaunchScreen.storyboard in Resources */,
 				22D98BB421A018550020B870 /* Localizable.strings in Resources */,
-				22B7A99D21A056CA002894A9 /* Key.plist in Resources */,
+				22B7A99D21A056CA002894A9 /* Keys.plist in Resources */,
 				220F975D219FF91000124762 /* Assets.xcassets in Resources */,
 				220F975B219FF90F00124762 /* Main.storyboard in Resources */,
 				22D98BBC21A01D870020B870 /* InfoPlist.strings in Resources */,

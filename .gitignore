@@ -2,6 +2,9 @@
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
+## MacOS
+.DS_Store
+
 ## Build generated
 build/
 DerivedData/
@@ -78,5 +81,5 @@ fastlane/test_output
 iOSInjectionProject/
 
 # Confidential File
-Key.plist
+Keys.plist
 
