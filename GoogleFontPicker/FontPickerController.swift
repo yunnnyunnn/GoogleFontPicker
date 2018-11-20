@@ -53,9 +53,9 @@ class FontPickerController: UIViewController {
         self.topView.addGestureRecognizer(tapGestureRecognizer)
         
         // Set up collection view.
+        self.fontCollectionView.isPrefetchingEnabled = false
         self.fontCollectionView.dataSource = self
         self.fontCollectionView.delegate = self
-        self.fontCollectionView.prefetchDataSource = self
         
         // Listen to notifications
         NotificationCenter.default.addObserver(self, selector: #selector(self.fontListUpdated(_:)), name: NSNotification.Name(rawValue: FontManager.NOTIFICATION_UPDATED), object: nil)
@@ -191,7 +191,7 @@ extension FontPickerController: UITextFieldDelegate {
     }
 }
 
-extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDataSourcePrefetching {
+extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.fonts.count
@@ -205,15 +205,37 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         
         let font = self.fonts[indexPath.row]
         
+        // Basic setup for the cell and binding.
         cell.configure(with: font, selectedFontName: self.pickedFontName)
         
+        // If font is not downloaded and has no ongoing download task, start the download process.
         if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
             FontManager.shared.downloadFile(forFont: font) { [unowned self] (localFileName) in
                 
-                if localFileName != nil {
-                    // Try to present the font if visible.
-                    DispatchQueue.main.async {
-                        self.presentFontIfVisible(font)
+                if let localFileName = localFileName {
+                    
+                    if cell.representedFont == font.name,
+                        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+                        let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                        
+                        // The cell is still there representing the same font. Show the preview.
+                        DispatchQueue.main.async {
+                            let wasHidden = cell.label.isHidden
+                            cell.label.font = customFont
+                            cell.label.isHidden = false
+                            if wasHidden {
+                                cell.label.alpha = 0.0
+                                UIView.animate(withDuration: 0.25, animations: {
+                                    cell.label.alpha = 1.0
+                                })
+                            }
+                        }
+                        
+                    } else {
+                        // The original cell is not representing the same font. Try to find if another cell should present the font now.
+                        DispatchQueue.main.async {
+                            self.presentFontIfVisible(font)
+                        }
                     }
                 }
                 
@@ -237,29 +259,6 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         }
         
         collectionView.deselectItem(at: indexPath, animated: false)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
-        
-        // Begin asynchronously fetching font files for the requested index paths.
-        for indexPath in indexPaths {
-            let font = self.fonts[indexPath.row]
-            
-            if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
-                FontManager.shared.downloadFile(forFont: font) { [unowned self] (localFileName) in
-                    
-                    if localFileName != nil {
-                        // Try to present the font if visible.
-                        DispatchQueue.main.async {
-                            self.presentFontIfVisible(font)
-                        }
-                    }
-                    
-                }
-            }
-            
-        }
-        
     }
     
 }
