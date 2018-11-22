@@ -93,9 +93,7 @@ class FontPickerController: UIViewController {
             // Find if the visible cell should present the font.
             if let previewCell = visibleCell as? FontPreviewCell,
                 previewCell.representedFont == font.name,
-                let localFileName = font.regular?.localFileName,
-                let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-                let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                let customFont = font.regular?.getCustomFont(withSize: 15.0) {
                 
                 let wasHidden = previewCell.label.isHidden
                 previewCell.label.font = customFont
@@ -270,11 +268,10 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         if font.regular?.localFileName == nil && font.regular?.downloadTask == nil {
             FontManager.shared.downloadFile(forFont: font) { [unowned self] (localFileName) in
                 
-                if let localFileName = localFileName {
+                if let _ = localFileName {
                     
                     if cell.representedFont == font.name,
-                        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-                        let customFont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+                        let customFont = font.regular?.getCustomFont(withSize: 15.0) {
                         
                         // The cell is still there representing the same font. Show the preview.
                         DispatchQueue.main.async {
@@ -309,9 +306,7 @@ extension FontPickerController: UICollectionViewDelegate, UICollectionViewDataSo
         // Change the preview with the font and show selection border.
         let font = self.fonts[indexPath.row]
         
-        if let localFileName = font.regular?.localFileName,
-            let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-            let customfont = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 26.0) {
+        if let customfont = font.regular?.getCustomFont(withSize: 26.0) {
             self.previewTextField.font = customfont
             self.pickedFontName = font.name
             collectionView.reloadData()

@@ -49,9 +49,7 @@ class FontPreviewCell: UICollectionViewCell {
         
         // Change text and the font.
         self.label.text = font.name
-        if let localFileName = font.regular?.localFileName,
-            let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-            let font = UIFont.font(withFileAt: fileURL.appendingPathComponent(localFileName), size: 15.0) {
+        if let font = font.regular?.getCustomFont(withSize: 15.0) {
             // We have the font. Change it.
             self.label.isHidden = false
             self.label.font = font

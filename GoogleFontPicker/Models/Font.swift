@@ -75,6 +75,7 @@ class FontVariant: NSObject, NSCoding {
     let remoteURL: URL
     var downloadTask: URLSessionDataTask? = nil
     var localFileName: String? = nil
+    private var customFont: UIFont? = nil
 
     override var description: String {
         return "Name: \(self.name)\nRemoteURL: \(self.remoteURL)\nLocalFileName: \(String(describing: self.localFileName))"
@@ -109,20 +110,59 @@ class FontVariant: NSObject, NSCoding {
         
     }
     
+    // MARK: - Accesss
+    /**
+     Get the custom UIFont with specific size.
+     
+     - Parameter size: The desired font size (in point).
+     
+     - Returns: A custom font from the file. `nil` if failure or no file path to create.
+     
+     */
+    func getCustomFont(withSize size: CGFloat) -> UIFont? {
+        
+        // If UIFont already exists, use it.
+        if let font = self.customFont {
+            return font.withSize(size)
+        }
+        
+        // Check if local file exist
+        guard let localFileName = self.localFileName else {
+            return nil
+        }
+        
+        // Create a base font object.
+        if let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(localFileName),
+            let customFont = UIFont.font(withFileAt: fileURL) {
+            
+            self.customFont = customFont
+            return customFont.withSize(size)
+            
+        } else {
+            
+            // Failed to create font.
+            print("Failed to create custom font.")
+            self.localFileName = nil
+            return nil
+            
+        }
+        
+    }
+
+    
 }
 
 extension UIFont {
     
     /**
-     A convenient function to create a custom font with font file URL and size.
+     A convenient function to create a custom font with font file URL with a default size 15.0.
      
      - Parameter url: The local file URL for the font.
-     - Parameter size: The font size.
      
      - Returns: A custom font from the file. `nil` if failure.
 
      */
-    class func font(withFileAt url: URL, size: CGFloat) -> UIFont? {
+    class func font(withFileAt url: URL) -> UIFont? {
         guard let data = NSData(contentsOf: url) else {
             print("Failed to get data from URL:\n\(url)")
             return nil
@@ -146,7 +186,7 @@ extension UIFont {
         var error: Unmanaged<CFError>?
         CTFontManagerRegisterGraphicsFont(cgFont, &error)
         if let fontName = cgFont.postScriptName,
-            let customFont = UIFont(name: String(fontName), size: size) {
+            let customFont = UIFont(name: String(fontName), size: 15.0) {
             return customFont
         } else {
             print("Error loading Font.")
